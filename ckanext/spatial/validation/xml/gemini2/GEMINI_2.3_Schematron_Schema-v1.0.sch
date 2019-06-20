@@ -30,7 +30,6 @@
      in any format or medium, under the terms of the Open Government Licence.
 
      Document History:
-
      2017-09-08 - Modified from GEMINI 2.1 Schematron Schema.sch
                 ~ All contexts changed to allow checking of metadata either as CSW response or standalone metadata record
                 ~ Namespace prefixes for all relevant XML schema added.
