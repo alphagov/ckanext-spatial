@@ -40,6 +40,15 @@ To use the default CKAN tag schema add this to the CKAN ini file
 
     ckan.spatial.validator.use_default_tag_schema = true
 
+Gemini 2.3 schema
+-----------------
+
+In order to try out a Gemini 2.3 file with the validator add this to the harvest source config -
+
+.. code-block:: json
+
+    {"validator_profiles": ["iso19139eden", "constraints-1.4", "gemini2-3"]}
+
 Community
 ---------
 
