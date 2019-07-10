@@ -15,6 +15,7 @@ from numbers import Number
 import uuid
 import logging
 import difflib
+import re
 
 from lxml import etree
 from sqlalchemy.sql import update, bindparam
@@ -438,18 +439,34 @@ class GeminiHarvester(SpatialHarvester):
         name = munge_title_to_name(title).replace('_', '-')
         while '--' in name:
             name = name.replace('--', '-')
-        like_q = u'%s%%' % name
-        pkg_query = Session.query(Package).filter(Package.name.ilike(like_q)).limit(100)
-        taken = [pkg.name for pkg in pkg_query]
-        if name not in taken:
-            return name
-        else:
-            counter = 1
-            while counter < 101:
-                if name+str(counter) not in taken:
-                    return name+str(counter)
+        like_q = "{}%".format(name)
+
+        pkg_query = Session.query(
+            Package
+        ).filter(
+            Package.name.ilike(like_q)
+        ).order_by(
+            Package.metadata_created.desc()
+        ).first()
+
+        if pkg_query:
+            match = re.match(r"\D+(\d+)$", pkg_query.name)
+            counter = int(match.group(1)) if match else 0
+
+            while True:
                 counter = counter + 1
-            return None
+                new_name = name + str(counter)
+
+                have_name = Session.query(
+                    Package
+                ).filter(
+                    Package.name.ilike(new_name)
+                ).first()
+
+                if not have_name:
+                    return new_name
+
+        return name
 
     @classmethod
     def _extract_first_licence_url(self, licences):
@@ -641,8 +658,13 @@ class GeminiCswHarvester(GeminiHarvester, SingletonPlugin):
             return False
 
         try:
-            # Save the fetch contents in the HarvestObject
-            harvest_object.content = record['xml']
+            # Contents come from csw_client already declared and encoded as utf-8
+            # Remove original XML declaration
+            # (copied from csw.py:179
+
+            content = re.sub('<\?xml(.*)\?>', '', record['xml'])
+
+            harvest_object.content = content.strip()
             harvest_object.save()
         except Exception as e:
             self._save_object_error('Error saving the harvest object for GUID %s [%r]' % \
