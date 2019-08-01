@@ -1,0 +1,16 @@
+argparse
+enum34==1.1.6
+freezegun==0.3.12
+GeoAlchemy>=0.6
+GeoAlchemy2==0.5.0
+idna==2.7
+lxml>=2.3
+ndg-httpsclient==0.5.1
+OWSLib==0.18.0
+pyasn1==0.4.4
+pyOpenSSL==18.0.0
+pyparsing>=2.1.10
+pyproj==2.2.2
+requests>=2.0
+Shapely>=1.2.13
+urllib3==1.23
