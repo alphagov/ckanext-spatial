@@ -81,7 +81,7 @@ class GeminiHarvester(SpatialHarvester):
                 self._save_object_error('Error importing Gemini document: %s' % six.text_type(e), harvest_object, 'Import')
             return False
 
-    def import_gemini_object(self, gemini_string):
+    def import_gemini_object(self, harvest_object):
         '''Imports the Gemini metadata into CKAN.
 
         The harvest_source_reference is an ID that the harvest_source uses
@@ -91,8 +91,8 @@ class GeminiHarvester(SpatialHarvester):
         Some errors raise Exceptions.
         '''
         log = logging.getLogger(__name__ + '.import')
-        gemini_string = str.encode(gemini_string)  # encode string as bytes instead
-        xml = etree.fromstring(gemini_string)
+        gemini_string = harvest_object.content
+        xml = etree.fromstring(gemini_string.encode('utf-8'))
         valid, profile, errors = self._get_validator().is_valid(xml)
         if not valid:
             out = errors[0][0] + ':\n' + '\n'.join(e[0] for e in errors[1:])
@@ -102,14 +102,14 @@ class GeminiHarvester(SpatialHarvester):
         unicode_gemini_string = etree.tostring(xml, encoding='utf-8', pretty_print=True)
 
         # may raise Exception for errors
-        package_dict = self.write_package_from_gemini_string(unicode_gemini_string)
+        package_dict = self.write_package_from_gemini_string(unicode_gemini_string, harvest_object)
 
         if package_dict:
             return True
         else:
             return 'unchanged'
 
-    def write_package_from_gemini_string(self, content):
+    def write_package_from_gemini_string(self, content, harvest_object):
         '''Create or update a Package based on some content that has
         come from a URL.
 
@@ -264,7 +264,7 @@ class GeminiHarvester(SpatialHarvester):
 
         # We need to get the owner organization (if any) from the harvest
         # source dataset
-        source_dataset = Package.get(self.obj.source.id)
+        source_dataset = Package.get(harvest_object.source.id)
         if source_dataset.owner_org:
             package_dict['owner_org'] = source_dataset.owner_org
 
@@ -476,7 +476,7 @@ class GeminiHarvester(SpatialHarvester):
 
         context = {'model':model,
                    'session':Session,
-                   'user': self._get_user_name(),
+                   'user':self._get_user_name(),
                    'schema':package_schema,
                    'extras_as_string':True,
                    'api_version': '2'}
