@@ -94,10 +94,8 @@ class TestValidation(object):
         )
 
     def test_05_series_fail_iso19139_schema(self):
-        errors = self.get_validation_errors(
-            validation.ISO19139EdenSchema,
-            "gemini2.1/validation/05_Series_Invalid_XSD_No_Such_Element.xml",
-        )
+        errors = self.get_validation_errors(validation.ISO19139EdenSchema,
+             'gemini2.1/validation/05_Series_Invalid_XSD_No_Such_Element.xml')
         assert len(errors) > 0
         assert_in("(gmx.xsd)", errors)
         assert_in(
