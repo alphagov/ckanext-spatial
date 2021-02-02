@@ -98,7 +98,7 @@ class GeminiHarvester(SpatialHarvester):
             log.error('Errors found for object with GUID %s:' % self.obj.guid)
             self._save_object_error(out,self.obj,'Import')
 
-        unicode_gemini_string = etree.tostring(xml, encoding='utf8', pretty_print=True)
+        unicode_gemini_string = etree.tostring(xml, encoding='utf-8', pretty_print=True)
 
         # may raise Exception for errors
         package_dict = self.write_package_from_gemini_string(unicode_gemini_string)
@@ -138,7 +138,7 @@ class GeminiHarvester(SpatialHarvester):
         if len(last_harvested_object) == 1:
             last_harvested_object = last_harvested_object[0]
         elif len(last_harvested_object) > 1:
-                raise Exception('Application Error: more than one current record for GUID %s' % gemini_guid)
+            raise Exception('Application Error: more than one current record for GUID %s' % gemini_guid)
 
         reactivate_package = False
         if last_harvested_object:
@@ -508,7 +508,7 @@ class GeminiHarvester(SpatialHarvester):
         if gemini_xml is None:
             self._save_gather_error('Content is not a valid Gemini document without the gmd:MD_Metadata element', self.harvest_job)
 
-        gemini_string = etree.tostring(gemini_xml)
+        gemini_string = etree.tostring(gemini_xml).decode('utf-8')
         gemini_document = GeminiDocument(gemini_string)
         try:
             gemini_guid = gemini_document.read_value('guid')
