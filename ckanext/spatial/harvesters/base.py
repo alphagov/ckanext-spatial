@@ -22,6 +22,7 @@ from ckan import plugins as p
 from ckan import model
 from ckan.lib.helpers import json
 from ckan import logic
+from ckan.lib.navl.dictization_functions import validate
 from ckan.lib.navl.validators import not_empty, unicode_safe
 from ckan.lib.search.index import PackageSearchIndex
 from ckanext.harvest.harvesters.base import munge_tag
