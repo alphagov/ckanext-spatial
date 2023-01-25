@@ -94,6 +94,7 @@ class GeminiHarvester(SpatialHarvester):
         '''
         gemini_string = harvest_object.content
         log = logging.getLogger(__name__ + '.import')
+        gemini_string = str.encode(gemini_string)  # encode string as bytes instead
         xml = etree.fromstring(gemini_string)
         valid, profile, errors = self._get_validator().is_valid(xml)
         if not valid:
@@ -296,7 +297,7 @@ class GeminiHarvester(SpatialHarvester):
 
         # We need to get the owner organization (if any) from the harvest
         # source dataset
-        source_dataset = Package.get(harvest_object.source.id)
+        source_dataset = Package.get(self.obj.source.id)
         if source_dataset.owner_org:
             package_dict['owner_org'] = source_dataset.owner_org
 
@@ -508,7 +509,7 @@ class GeminiHarvester(SpatialHarvester):
 
         context = {'model':model,
                    'session':Session,
-                   'user': self._get_user_name(),
+                   'user':self._get_user_name(),
                    'schema':package_schema,
                    'extras_as_string':True,
                    'api_version': '2'}
