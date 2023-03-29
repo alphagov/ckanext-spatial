@@ -79,8 +79,7 @@ class GeminiHarvester(SpatialHarvester):
                 self._save_object_error('Error importing Gemini document.', harvest_object, 'Import')
             else:
                 self._save_object_error('Error importing Gemini document: %s' % six.text_type(e), harvest_object, 'Import')
-            if debug_exception_mode:
-                raise
+            return False
 
     def import_gemini_object(self, gemini_string):
         '''Imports the Gemini metadata into CKAN.
