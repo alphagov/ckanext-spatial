@@ -1,11 +1,11 @@
 import sys
+import json
 import logging
 import datetime
 import io
 import os
 import argparse
-
-from configparser import SafeConfigParser
+from six.moves.configparser import SafeConfigParser
 
 import requests
 from lxml import etree
@@ -34,14 +34,17 @@ def setup_db(pycsw_config):
     table_name = pycsw_config.get('repository', 'table')
 
     ckan_columns = [
-        Column('ckan_id', Text, index=True),
-        Column('ckan_modified', Text),
+        Column("ckan_id", Text, index=True),
+        Column("ckan_modified", Text),
     ]
 
-    pycsw.core.admin.setup_db(database,
-        table_name, '',
+    pycsw.core.admin.setup_db(
+        database,
+        table_name,
+        "",
         create_plpythonu_functions=False,
-        extra_columns=ckan_columns)
+        extra_columns=ckan_columns,
+    )
 
 
 def set_keywords(pycsw_config_file, pycsw_config, ckan_url, limit=20):
@@ -56,16 +59,28 @@ def set_keywords(pycsw_config_file, pycsw_config, ckan_url, limit=20):
     response = requests.get(url)
     tags = response.json()
 
-    log.info('Deriving top %d tags', limit)
+    log.info("Deriving top %d tags", limit)
     # uniquify and sort by top limit
     tags_unique = [list(x) for x in set(tuple(x) for x in tags)]
     tags_sorted = sorted(tags_unique, key=lambda x: x[1], reverse=1)[0:limit]
-    keywords = ','.join('%s' % tn[0] for tn in tags_sorted)
+    keywords = ",".join("%s" % tn[0] for tn in tags_sorted)
 
-    log.info('Setting tags in pycsw configuration file %s', pycsw_config_file)
-    pycsw_config.set('metadata:main', 'identification_keywords', keywords)
-    with open(pycsw_config_file, 'wb') as configfile:
+    log.info("Setting tags in pycsw configuration file %s", pycsw_config_file)
+    pycsw_config.set("metadata:main", "identification_keywords", keywords)
+    with open(pycsw_config_file, "wb") as configfile:
         pycsw_config.write(configfile)
+
+
+def _get_harvest_object_id(result):
+    if 'harvest_object_id' in result:
+        return result['harvest_object_id']
+
+    for h in result['harvest']:
+        h_json = json.loads(h.replace("'", '"'))
+        if h_json['key'] == 'harvest_object_id':
+            return h_json['value']
+
+    raise Exception(f"Error locating harvest_object_id {result.id}")
 
 
 def _get_gathered_records(ckan_url):
@@ -73,10 +88,13 @@ def _get_gathered_records(ckan_url):
     limit = 1000
     error_count = start = 0
 
-    log.info('Started gathering CKAN datasets identifiers: {0}'.format(str(datetime.datetime.now())))
+    log.info(
+        "Started gathering CKAN datasets identifiers: {0}".format(
+            str(datetime.datetime.now())
+        )
+    )
 
-    query = 'api/search/dataset?fl=id,metadata_modified,extras_harvest_object_id,' \
-            'extras_metadata_source&q=harvest_object_id:[\\\\"\\\\"%20TO%20*]&start={start}&rows={limit}'
+    query = 'api/search/dataset?fl=id,metadata_modified,harvest_object_id,harvest&start={start}&rows={limit}'
 
     while True:
         try:
@@ -96,9 +114,20 @@ def _get_gathered_records(ckan_url):
             if not results:
                 break
             for result in results:
+                if not set(['harvest', 'harvest_object_id']).intersection(set(result.keys())):
+                    print(f'Skipping {result["id"]}')
+                    continue
+                try:
+                    harvest_object_id = _get_harvest_object_id(result)
+                except Exception as e:
+                    log.error("Error gathering: %r", e)
+                    error_count += 1
+                
+                print(f'Gathering {result["id"]}')
+
                 gathered_records[result['id']] = {
                     'metadata_modified': result['metadata_modified'],
-                    'harvest_object_id': result['harvest_object_id'],
+                    'harvest_object_id': harvest_object_id,
                     'source': result.get('metadata_source')
                 }
             start = start + limit
@@ -107,9 +136,11 @@ def _get_gathered_records(ckan_url):
             log.error("Error gathering: %r", e)
             error_count += 1
 
-    log.info('Gather finished ({0} datasets): {1}'.format(
-        len(gathered_records.keys()),
-        str(datetime.datetime.now())))
+    log.info(
+        "Gather finished ({0} datasets): {1}".format(
+            len(gathered_records.keys()), str(datetime.datetime.now())
+        )
+    )
 
     return gathered_records, error_count
 
@@ -241,11 +272,11 @@ def clear(pycsw_config):
     database = pycsw_config.get('repository', 'database')
     table_name = pycsw_config.get('repository', 'table')
 
-    log.debug('Creating engine')
+    log.debug("Creating engine")
     engine = create_engine(database)
     records = Table(table_name, MetaData(engine))
     records.delete().execute()
-    log.info('Table cleared')
+    log.info("Table cleared")
 
 
 def get_record(context, repo, ckan_url, ckan_id, ckan_info):
@@ -258,30 +289,30 @@ def get_record(context, repo, ckan_url, ckan_id, ckan_info):
     url = query % ckan_info['harvest_object_id']
     response = requests.get(url)
 
-    if ckan_info['source'] == 'arcgis':
+    if ckan_info["source"] == "arcgis":
         return
 
     try:
         xml = etree.parse(io.BytesIO(response.content))
     except Exception as err:
-        log.error('Could not pass xml doc from %s, Error: %s' % (ckan_id, err))
+        log.error('Could not pass xml doc from %s, url: %s, Error: %s' % (ckan_id, url, err))
         raise
 
     try:
         record = metadata.parse_record(context, xml, repo)[0]
     except Exception as err:
-        log.error('Could not extract metadata from %s, Error: %s' % (ckan_id, err))
+        log.error('Could not extract metadata from %s, url: %s, Error: %s' % (ckan_id, url, err))
         raise
 
     if not record.identifier:
         record.identifier = ckan_id
     record.ckan_id = ckan_id
-    record.ckan_modified = ckan_info['metadata_modified']
+    record.ckan_modified = ckan_info["metadata_modified"]
 
     return record
 
 
-usage='''
+usage = """
 Manages the CKAN-pycsw integration
 
     python ckan-pycsw.py setup [-p]
@@ -300,21 +331,26 @@ All commands require the pycsw configuration file. By default it will try
 to find a file called 'default.cfg' in the same directory, but you'll
 probably need to provide the actual location via the -p option:
 
-    paster ckan-pycsw setup -p /etc/ckan/default/pycsw.cfg
+    python ckan_pycsw.py setup -p /etc/ckan/default/pycsw.cfg
 
 The load command requires a CKAN URL from where the datasets will be pulled:
 
-    paster ckan-pycsw load -p /etc/ckan/default/pycsw.cfg -u http://localhost
+    python ckan_pycsw.py load -p /etc/ckan/default/pycsw.cfg -u http://localhost
 
-'''
+"""
+
 
 def _load_config(file_path):
     abs_path = os.path.abspath(file_path)
     if not os.path.exists(abs_path):
-        raise AssertionError('pycsw config file {0} does not exist.'.format(abs_path))
+        raise AssertionError("pycsw config file {0} does not exist.".format(abs_path))
 
     config = SafeConfigParser()
     config.read(abs_path)
+
+    # update env vars in cfg
+    config._sections['server']['url'] = config._sections['server']['url'].replace('${CKAN_SITE_URL}', os.environ.get('CKAN_SITE_URL'))
+    config._sections['repository']['database'] = config._sections['repository']['database'].replace('${CKAN_SQLALCHEMY_URL}', os.environ.get('CKAN_SQLALCHEMY_URL'))
 
     return config
 
@@ -341,18 +377,18 @@ if __name__ == '__main__':
     arg = parser.parse_args()
     pycsw_config = _load_config(arg.pycsw_config)
 
-    if arg.command == 'setup':
+    if arg.command == "setup":
         setup_db(pycsw_config)
-    elif arg.command in ['load', 'set_keywords']:
+    elif arg.command in ["load", "set_keywords"]:
         if not arg.ckan_url:
-            raise AssertionError('You need to provide a CKAN URL with -u or --ckan_url')
-        ckan_url = arg.ckan_url.rstrip('/') + '/'
-        if arg.command == 'load':
+            raise AssertionError("You need to provide a CKAN URL with -u or --ckan_url")
+        ckan_url = arg.ckan_url.rstrip("/") + "/"
+        if arg.command == "load":
             load(pycsw_config, ckan_url)
         else:
             set_keywords(arg.pycsw_config, pycsw_config, ckan_url)
-    elif arg.command == 'clear':
+    elif arg.command == "clear":
         clear(pycsw_config)
     else:
-        print('Unknown command {0}'.format(arg.command))
+        print("Unknown command {0}".format(arg.command))
         sys.exit(1)
