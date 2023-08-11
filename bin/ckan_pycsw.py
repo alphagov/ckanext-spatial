@@ -8,7 +8,6 @@ import argparse
 from six.moves.configparser import SafeConfigParser
 
 import requests
-from lxml import etree
 
 from pycsw.core import metadata, repository, util
 import pycsw.core.config
@@ -287,19 +286,12 @@ def get_record(context, repo, ckan_url, ckan_id, ckan_info):
 
     query = ckan_url + 'harvest/object/%s'
     url = query % ckan_info['harvest_object_id']
-    response = requests.get(url)
 
     if ckan_info["source"] == "arcgis":
         return
 
     try:
-        xml = etree.parse(io.BytesIO(response.content))
-    except Exception as err:
-        log.error('Could not pass xml doc from %s, url: %s, Error: %s' % (ckan_id, url, err))
-        raise
-
-    try:
-        record = metadata.parse_record(context, xml, repo)[0]
+        record = metadata.parse_record(context, url, repo)[0]
     except Exception as err:
         log.error('Could not extract metadata from %s, url: %s, Error: %s' % (ckan_id, url, err))
         raise
