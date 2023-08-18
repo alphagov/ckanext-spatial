@@ -189,7 +189,7 @@ def _create_records(new, gathered_records, ckan_url, repo, context, error_count)
     return new_count, error_count
 
 
-def _update_records(changed, gathered_records, repo, context, error_count):
+def _update_records(changed, gathered_records, ckan_url, repo, context, error_count):
     change_count = 0
     for ckan_id in changed:
         try:
@@ -251,7 +251,7 @@ def load(pycsw_config, ckan_url):
         new, gathered_records, ckan_url, repo, context, error_count)
 
     change_count, error_count = _update_records(
-        changed, gathered_records, repo, context, error_count)
+        changed, gathered_records, ckan_url, repo, context, error_count)
 
     log.info("Loading completed: {gather_count} gathered, {new_count} added, "
              "{change_count} changed, {delete_count} deleted, {error_count} errored".format(
