@@ -180,6 +180,8 @@ def _create_records(new, gathered_records, ckan_url, repo, context, error_count)
             if not record:
                 log.info('Skipped record %s' % ckan_id)
                 continue
+            if type(record.xml) is bytes:
+                record.xml = record.xml.decode('utf-8')
             repo.insert(record, 'local', util.get_today_and_now())
             log.info('Inserted %s' % ckan_id)
             new_count += 1
