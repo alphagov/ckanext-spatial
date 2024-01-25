@@ -61,8 +61,8 @@ https://docs.ckan.org/projects/ckanext-spatial/en/latest/
     gemini_doc_harvester=ckanext.spatial.harvesters.gemini:GeminiDocHarvester
     gemini_waf_harvester=ckanext.spatial.harvesters.gemini:GeminiWafHarvester
 
-		[ckan.click_command]
-		spatial = ckanext.spatial.commands.spatial:spatial
+		# [ckan.click_command]
+		# spatial = ckanext.spatial.commands.spatial:spatial
 
     [paste.paster_command]
     spatial=ckanext.spatial.commands.spatial:Spatial
