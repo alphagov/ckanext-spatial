@@ -20,8 +20,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - name: Install requirements
@@ -64,7 +64,7 @@ jobs:
       PGPASSWORD: postgres
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install dependencies (common)
       run: |
@@ -81,13 +81,12 @@ jobs:
 
     - name: Enable pip cache
       run: |
-        # shellcheck disable=SC2046
         echo "PIP version: $(pip --version)"
         mkdir -p ~/.cache/pip
         pip install -U pip --cache-dir ~/.cache/pip
-        chown -R $(whoami) ~/.cache/pip
+        chown -R "$(whoami)"" ~/.cache/pip
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       id: cache
       with:
         path: |
@@ -130,6 +129,6 @@ jobs:
       run: pytest --ckan-ini=test.ini --cov=ckanext.spatial --cov-report=xml --cov-append --disable-warnings ckanext/spatial/tests
 
     - name: Upload coverage report to codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
-        file: ./coverage.xml
+        files: ./coverage.xml
