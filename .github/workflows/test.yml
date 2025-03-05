@@ -81,6 +81,7 @@ jobs:
 
     - name: Enable pip cache
       run: |
+        # shellcheck disable=SC2046
         echo "PIP version: $(pip --version)"
         mkdir -p ~/.cache/pip
         pip install -U pip --cache-dir ~/.cache/pip
