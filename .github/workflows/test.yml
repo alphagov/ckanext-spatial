@@ -84,7 +84,7 @@ jobs:
         echo "PIP version: $(pip --version)"
         mkdir -p ~/.cache/pip
         pip install -U pip --cache-dir ~/.cache/pip
-        chown -R "$(whoami)"" ~/.cache/pip
+        chown -R "$(whoami)" ~/.cache/pip
 
     - uses: actions/cache@v4
       id: cache
