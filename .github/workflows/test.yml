@@ -77,7 +77,8 @@ jobs:
           libxslt \
           gcc \
           libxml2-dev \
-          libxslt-dev
+          libxslt-dev \
+          gnupg
 
     - name: Enable pip cache
       run: |

@@ -856,6 +856,8 @@ class SpatialHarvester(HarvesterBase):
         '''
         url = url.replace(' ', '%20')
         response = requests.get(url, timeout=20)
+        if response.status_code != 200:
+            raise Exception('Request to {0} failed with status code {1}'.format(url, response.status_code))
 
         content = response.content.decode('UTF-8') if type(response.content) is bytes else response.content
 
