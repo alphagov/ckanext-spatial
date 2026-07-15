@@ -12,7 +12,7 @@ pycsw==2.6.1  # as OWSLib is not pinned
 
 setuptools==80.0.0
 
-Shapely==2.0.4
+Shapely==2.1.2
 OWSLib==0.28.1
 geojson==3.0.1
 
