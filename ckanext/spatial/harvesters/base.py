@@ -855,7 +855,7 @@ class SpatialHarvester(HarvesterBase):
 
         '''
         url = url.replace(' ', '%20')
-        response = requests.get(url, timeout=20)
+        response = requests.get(url, timeout=20, headers={"User-Agent": "datagovuk-harvester"})
         if response.status_code != 200:
             raise Exception('Request to {0} failed with status code {1}'.format(url, response.status_code))
 
