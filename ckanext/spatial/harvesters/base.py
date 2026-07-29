@@ -1,6 +1,7 @@
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
+import os
 import re
 import cgitb
 import lxml.html
@@ -855,7 +856,12 @@ class SpatialHarvester(HarvesterBase):
 
         '''
         url = url.replace(' ', '%20')
-        response = requests.get(url, timeout=20, headers={"User-Agent": "datagovuk-harvester"})
+        # NOTE: This is a tactical fix as requests were failing for some harvesters due to the user agent being blocked. This check and the USER_AGENT_URL env var should be removed once this issue is resolved.
+        headers = {}
+        if 'USER_AGENT_URL' in os.environ and url.startswith(os.environ.get('USER_AGENT_URL')):
+            headers = {"User-Agent": "datagovuk-harvester"}
+        # end of fix
+        response = requests.get(url, timeout=20, headers=headers)
         if response.status_code != 200:
             raise Exception('Request to {0} failed with status code {1}'.format(url, response.status_code))
 
