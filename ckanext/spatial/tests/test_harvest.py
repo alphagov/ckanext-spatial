@@ -431,6 +431,7 @@ class TestHarvest(HarvestFixtureBase):
         harvester.import_stage(obj)
 
         obj.current = False
+        obj.report_status = 'added'
         obj.save()
 
         # Check obj errors
