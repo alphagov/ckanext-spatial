@@ -48,6 +48,12 @@ To use the default CKAN tag schema add this to the CKAN ini file
 
     ckan.spatial.validator.use_default_tag_schema = true
 
+Running tests locally
+---------------------
+
+To run the tests locally on a MacOS you will need to build the base image <https://github.com/alphagov/ckan-docker-base> and then build the docker compose image
+before running the tests on the CKAN container.
+
 Community
 ---------
 
