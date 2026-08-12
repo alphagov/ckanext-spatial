@@ -1,9 +1,11 @@
-FROM --platform=$TARGETPLATFORM ghcr.io/alphagov/ckan:2.10.4-e-base
+FROM ckan/ckan-dev:2.10-py3.10 
 
 ENV SRC=/srv/app/src
-ENV CKAN_HOME=/usr/lib/ckan/venv/src/ckan
+ENV CKAN_HOME=/srv/app/src/ckan
 
 WORKDIR $SRC
+
+USER root
 
 COPY . $SRC/ckanext-spatial/
 
@@ -18,7 +20,7 @@ RUN echo "Installing harvester" && \
 RUN cd ckanext-spatial && \
     pip install -r requirements.txt && \
     pip install -e . && \
-    sed -i -e 's|use = config:.*|use = config:/usr/lib/ckan/venv/src/ckan/test-core.ini|' test.ini
+    sed -i -e 's|use = config:.*|use = config:/srv/app/src/ckan/test-core.ini|' test.ini
 
 RUN cd $CKAN_HOME && \
     sed -i -e 's|sqlalchemy.url =.*|sqlalchemy.url = postgresql://ckan_default:pass@db/ckan_test|' test-core.ini && \
