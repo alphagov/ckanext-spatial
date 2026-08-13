@@ -150,7 +150,16 @@ class GeminiHarvester(SpatialHarvester):
                                 .filter(HarvestObject.metadata_modified_date==metadata_modified_date) \
                                 .first()
             if invalid_harvested_object:
-                raise Exception('Invalid harvest object with GEMINI guid %s found' % gemini_guid)
+                has_harvest_object_added = Session.query(HarvestObject) \
+                    .filter(HarvestObject.id!=self.obj.id) \
+                    .filter(HarvestObject.guid==gemini_guid) \
+                    .filter(HarvestObject.report_status=="added") \
+                    .first()
+                if has_harvest_object_added:
+                    log.warning('Invalid harvest object with GEMINI guid %s found previously added', gemini_guid)
+                    raise Exception('Invalid harvest object with GEMINI guid %s found' % gemini_guid)
+                else:
+                    log.warning('Invalid harvest object with GEMINI guid %s found but not previously added', gemini_guid)
 
         if last_harvested_object and last_harvested_object.harvest_source_id == harvest_object.harvest_source_id:
             def get_harvest_object_url(harvest_object_id):
